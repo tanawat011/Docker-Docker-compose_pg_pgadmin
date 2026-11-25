@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # .env.example's placeholder passwords are fine for throwaway CI containers.
+      - run: cp .env.example .env
+      - run: docker compose up -d --wait
+      - name: every service answers
+        run: |
+          docker compose exec -T db psql -U app -d app -tAc 'SELECT version()'
+          curl -fsS -o /dev/null localhost:9602/
+          curl -fsS localhost:9603/misc/ping && echo
+          docker compose logs pgadmin | grep -q 'Added 0 Server Group(s) and 1 Server(s)'
+      - if: always()
+        run: docker compose down -v
