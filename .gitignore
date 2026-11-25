@@ -1,0 +1,4 @@
+# Local settings (secrets)
+.env
+.DS_Store
+.idea/
